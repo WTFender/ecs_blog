@@ -11,6 +11,13 @@ jobs:
     name: "Terraform"
     runs-on: ubuntu-latest
     steps:
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
       - name: Checkout
         uses: actions/checkout@v2
 
@@ -34,8 +41,8 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request'
         run: |
-          cd terraform/infra && terraform plan -no-color -var-file ../terraform.tfvars
-          cd ../ecs && terraform plan -no-color -var-file ../terraform.tfvars
+          cd terraform/infra && terraform plan -no-color -var-file ../terraform.tfvars -var="aws_profile=default"
+          cd ../ecs && terraform plan -no-color -var-file ../terraform.tfvars -var="aws_profile=default"
         continue-on-error: true
 
       - uses: actions/github-script@0.9.0
@@ -66,5 +73,5 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          cd terraform/infra && terraform apply -auto-approve -var-file ../terraform.tfvars
-          cd ../ecs && terraform apply -auto-approve -var-file ../terraform.tfvars
+          cd terraform/infra && terraform apply -auto-approve -var-file ../terraform.tfvars -var="aws_profile=default"
+          cd ../ecs && terraform apply -auto-approve -var-file ../terraform.tfvars -var="aws_profile=default"
